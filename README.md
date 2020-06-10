@@ -1,1 +1,1 @@
-# Artificial Neural Network gor Combustion Simulation
+# Artificial Neural Network for Combustion Simulation
