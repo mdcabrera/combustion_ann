@@ -1,5 +1,5 @@
 ---
-title: "ANN for Combustion Simulations"
+title: "Blog | ANN for Combustion Simulations"
 site: distill::distill_website
 listing: posts
 ---
