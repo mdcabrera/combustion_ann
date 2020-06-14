@@ -1,0 +1,18 @@
+[
+  {
+    "path": "posts/welcome/",
+    "title": "Welcome to ANN for Combustion Simulations",
+    "description": "Welcome to our new blog, ANN for Combustion Simulations. We hope you enjoy \nreading what we have to say!",
+    "author": [
+      {
+        "name": "Nora Jones",
+        "url": "https://example.com/norajones"
+      }
+    ],
+    "date": "2020-06-14",
+    "categories": [],
+    "preview": {},
+    "last_modified": "2020-06-14T15:50:54+02:00",
+    "input_file": {}
+  }
+]
