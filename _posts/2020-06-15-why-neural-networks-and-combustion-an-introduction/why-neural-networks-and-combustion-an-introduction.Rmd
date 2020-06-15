@@ -1,0 +1,39 @@
+---
+title: "Why Neural Networks and Combustion: An Introduction"
+description: |
+  A short description of the post.
+author:
+  - name: Marlon Cabrera-Ormaza
+date: 06-15-2020
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+# Abstract:
+
+The main objective of the work presented here is to research the current trends and advances
+in the use of Artificial Neural Networks for the simulation of turbulent reactive flows using
+Computational Fluid Dynamics in order to design, train and implement an efficient network capable
+of predicting the chemical reaction source terms needed for the solveability of the Navier-Stokes
+equations for a turbulent reactive flow. Unlike non-reacting flows, this type of simulations need to
+be coupled with a combustion model, whose order of accuracy is linked with an increase in
+complexity. Here, the Eddy Dissipation Concept (EDC) is chosen as a combustion model, since it
+offers an acceptable balance between accuracy and computational cost. Unfortunately, even at its
+most optimal, this modeling of the turbulence-chemistry interaction remains still to cost-prohibitive
+for but not the simplest of problems, as the current implementations for dealing with the resulting
+system of ordinary differential equations incur on either large CPU or memory requirements. It is
+hoped that once the source terms produced by the neural network are combined with a combustion
+simulation based on the Eddy Dissipation Concept a decrease in computational resources is
+achieved while maintaining an acceptable level of accuracy. A training data has to also be
+generated, as well an experiment procedure, to test different combinations of parameters and
+validate results.
+
+
+Distill is a publication format for scientific and technical writing, native to the web.
+
+Learn more about using Distill at <https://rstudio.github.io/distill>.
+

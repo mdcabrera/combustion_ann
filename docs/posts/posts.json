@@ -14,5 +14,21 @@
     "preview": {},
     "last_modified": "2020-06-14T23:36:52+02:00",
     "input_file": "welcome.utf8.md"
+  },
+  {
+    "path": "posts/2020-06-15-why-neural-networks-and-combustion-an-introduction/",
+    "title": "Why Neural Networks and Combustion: An Introduction",
+    "description": "A short description of the post.",
+    "author": [
+      {
+        "name": "Marlon Cabrera-Ormaza",
+        "url": {}
+      }
+    ],
+    "date": "2020-06-15",
+    "categories": [],
+    "preview": {},
+    "last_modified": "2020-06-15T19:42:33+02:00",
+    "input_file": "why-neural-networks-and-combustion-an-introduction.utf8.md"
   }
 ]

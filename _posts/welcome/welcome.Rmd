@@ -1,5 +1,5 @@
 ---
-title: "Welcome to ANN for Combustion Simulations"
+title: "ANN for Combustion Simulations"
 description: |
   Welcome to our new blog, ANN for Combustion Simulations. We hope you enjoy 
   reading what we have to say!
