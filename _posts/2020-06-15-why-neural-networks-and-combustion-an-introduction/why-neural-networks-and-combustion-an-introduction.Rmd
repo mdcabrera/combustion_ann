@@ -1,7 +1,7 @@
 ---
 title: "Why Neural Networks and Combustion: An Introduction"
 description: |
-  A short description of the post.
+  This post seeks to discuss the potential of Artificial Neural Networks in treating the source terms needed in combustion simulations.   .
 author:
   - name: Marlon Cabrera-Ormaza
 date: 06-15-2020
@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = FALSE)
 The main objective of the work presented here is to research the current trends and advances
 in the use of Artificial Neural Networks for the simulation of turbulent reactive flows using
 Computational Fluid Dynamics in order to design, train and implement an efficient network capable
-of predicting the chemical reaction source terms needed for the solveability of the Navier-Stokes
+of predicting the chemical reaction source terms needed for solving the Navier-Stokes
 equations for a turbulent reactive flow. Unlike non-reacting flows, this type of simulations need to
 be coupled with a combustion model, whose order of accuracy is linked with an increase in
 complexity. Here, the Eddy Dissipation Concept (EDC) is chosen as a combustion model, since it
@@ -32,8 +32,217 @@ achieved while maintaining an acceptable level of accuracy. A training data has 
 generated, as well an experiment procedure, to test different combinations of parameters and
 validate results.
 
+## 1. Problem Description:
 
-Distill is a publication format for scientific and technical writing, native to the web.
+Although computational resources are still increasing, and more and more simulations are
+enabled, the computational time can still be prohibitive for reactive flow simulations using complex
+kinetic mechanisms. As the number of species in a reaction increases, so does the number of
+equations that must be solved. For example, GRI-Mech 3.0 an optimized mechanism designed to
+model natural gas combustion, developed by the University of California, Berkeley involves 53
+species and 325 elementary reactions[1]. Current hardware developments make this situation
+unlikely to change in the near future, since processors are approaching the point where heat
+dissipation will cripple the increase in operational speed, and even in the face of increasing
+parallelization of algorithms, memory speed will likely continue being a huge bottleneck in
+computation speed.
 
-Learn more about using Distill at <https://rstudio.github.io/distill>.
+The simulation of turbulent flows requires resolving the Navier Stokes Equations (NSE)
+over a very wide range of time and length scales. When coupled with chemistry kinetics, generally,
+the simulation of turbulent combustion through Computational Fluid Dynamics (CFD) is
+undertaken by one of the following three approaches [2] : Reynolds Averaged Navier Stokes
+(RANS) equations, Large Eddy Simulations (LES) and Direct Numerical Simulations (DNS) .
+However DNS is as of now, computationally prohibitive even for non-reacting flows, and despite
+the fact that LES and RANS are able to reduce computational cost by ignoring the smallest length
+scales [3] (via a low-pass filtering of the NSE) and by solving for the mean values among all
+quantities, -respectively-, the representation of chemical kinetics is still a problem for all of them.
+
+This representation requires precise information on the time rate of change of all species
+involved in the reaction. To compute all these changes in species composition, an ODE system must
+be solved. Taking the example from before, solving the 53 necessary conservation equations, as
+well as the 325 reactions, might not be possible in a reasonable time. Adds to this issue, the fact that
+this kind of reactions more often than not have to deal with species with different time reaction
+rates, which will then thus make the system stiff [4], further straining the available computational
+resources by reducing the allowable time integration step.
+
+To couple the chemistry and turbulence mechanisms the Eddy Dissipation Concept (EDC)
+proposed -and late improved- by Magnussen ([5], [6] will be used. This model attempts to
+incorporate the significance of fine structures in a turbulent reacting flow in which combustion is
+important. In order to solve the time evolution of the different species at the fine scale level, the
+EDC model uses either in-situ adaptive tabulation (ISAT) or direct integration (DI) which are
+burdened by large memory and CPU requirements respectively. According to Christo [7], an
+optimal numerical scheme for the chemistry representation must offer the advantage of the
+aforementioned method, at low CPU and memory cost.
+
+There are many different strategies to overcome this problem. Tabulation can be used, or the
+mechanisms can be reduced to skeletal, i.e. simpler, mechanisms. Another way is to use Artificial
+Neural Networks (ANN) trained by kinetic data and use it to predict the concentration changes in
+combustion simulations. A lot of research is currently be done on CFD fields using this Machine
+Learning technique. Among these approaches are included among others, using ANN to find more
+efficient discretizations, and, as mentioned before, predict solutions of a given model.
+
+ANN have proven effective in solving many engineering problems, and though still not fully
+understood, there a proven mathematical results that back up their power for approximating any -
+at least continuous- function (under certain assumptions) . These results include the Kolmogorov-
+Arnold[8] representation theorem, and the Universal Approximation theorem [9]. However, though
+powerful, the proofs given for these theorems are not constructive, and thus don’t offer any
+algorithm to build an efficient network, and of utmost importance, no explicit estimates are
+provided for the number of units in a hidden layer[10]. Very recent developments [11] -from the last
+two years, and thus to be taken cautiously- even give optimistic approaches on how to solve one its
+may drawbacks: choosing the number of neurons and hidden layers (for which basically infinite
+possibilities exist) by modeling this problem as a Differential Equation and using extant numerical
+methods to approximate these parameters as a result.
+
+Since, the main performance limiting factor when modeling turbulent reactive flows is
+related to the computational effort used in solving the chemical reactions between all the involved
+species, a proposed plan of action is to devise an ANN capable of approximating the chemical
+reactions reliably, so as to couple it later with traditional non reactive flows, where the NSE are
+solved with a common model modeling technique (RANS/LES).
+
+Research on ANNs currently used in CFD, especially in reactive flow simulations should be
+studied. An ANN shall be trained and tested for a chemical mechanism for methane combustion.
+The application of the ANN for CFD simulations of flames should be possible in the end.
+
+## 2.Expected Results:
+
+
+* A detailed research on previous work involving the use of neural networks in reactive flow
+modeling.
+
+* A detailed discussion of the mathematical, physical and chemical aspects of reactive flows,
+including results of interest.
+
+* A detailed discussion of the mathematical details of Artificial Neural Networks, existing
+results, and current software implementations.
+
+* Generation of an appropriate set of labeled examples to train the ANN.
+
+* Development of an ANN code for training and prediction. Performance assessment of the
+model to select the best performing configuration.
+
+* Coupling the ANN with and existing simulation for result comparison. A nice added bonus
+will be the implementation of some benchmarking tool to measure memory and CPU
+resources. (If applicable)
+
+## 3.Procedure:
+
+The steps to be taken for the development of this thesis include:
+
+### I. Literature Review:
+
+* Documentation of current applications of Artificial Neural Networks in CFD, particularly in
+the context of reactive flow simulations (special emphasize on the Eddy Dissipation
+Concept).
+* Mathematical aspects of the Differential Equations governing the chemistry kinetics of
+reactive flows (Combustion Model, Turbulent Model, and Navier-Stokes Equations).
+* Mathematical Theory related to Neural Networks
+* Survey of current programming implementations, libraries, etc. (Python, Cantera,
+TensorFlow, Keras or other machine learning tools).
+
+
+### II. Thesis Outline:
+After literature review:
+
+* Outline of the thesis (1-2 pages + preliminary “Table of Contents”)
+
+* Preliminary time plan
+
+* At least monthly progress meetings and discussion
+
+
+### III. Mathematical Modeling and Implementation:
+
+Development/Implementation of a Neuronal Network for the prediction of chemical kinetics within
+flows in Python (or another programming language, Matlab, C++, etc.):
+
+a. Discussion of the mathematical aspects of chemistry kinetics in reactive flows, as well as current
+numerical approximation methods.
+b. Discussion of the mathematical aspects of Neural Networks.
+c. Selection of appropriate programming tools and libraries to be used in the Neural Network.
+d. Neural Network Implementation
+
+### IV. Numerical Simulation and Validation:
+
+* Training of the Neural Network using a data-set of interest
+* Start with simple (one step reactions), leading to more complex ones
+* Comparing the solution with Cantera (chemistry library to look-up reaction rate)
+
+## 4.State of the Art:
+
+* Porumbel et al. [12] reported considerable speed-ups and acceptable accuracy of a 5-layer
+Tanh ANN over DI and ISAT when dealing with a 16 species, methane reaction mechanism
+with an integration time-step of 2e-7 coupled with a LES simulation of a Laminar 1-D
+premixed methane flame and a turbulent 3-D methane flame.
+
+* Laubscher [13] compared the performance of a single-layer NN with 7 neurons and four
+different combination of activation functions against DI and ISAT. His results were validated
+against those available for the SANDIA D flame setup. Data for different time-step sizes
+was generated using Python, Cantera, sciPy and numPy and then coupled with Fluent 17.0.
+His report mentions accuracy comprable with traditional methods at decrease computational
+cost.
+
+* In 1996, Christo [7] proposed a combined ANN/PDF approach, in which the later is used in
+conjunction with DI simulations to create a training data-set. Earlier on the same year he
+investigated the use of NN with a joint PDF transport equation for H2/CO2 turbulent jet
+diffusion flames. He found that the benefits of ANN over traditional approaches are far
+superior (in cost terms) when dealing with high-complexity mechanisms, but offer no
+reward for those with less than three reactions.
+
+* In 1998, Blasco et al. [14] delved into the use of ANN in laminar direct simulations,
+modeling with them only the reaction mechanisms and not the whole flow. Their research
+concluded that the ANN was well-suited for predicting the chemical species evolution
+during the reaction, and reported a memory reduction with a factor of 831 when compared
+to ISAT and a CPU time reduction of between 165-511. They also reported a correlation
+between the size of the reaction time-step and the error between the ANN and the DI.
+
+
+## 5.References:
+
+[1] G. P. Smith et al., “GRI-MECH 3.0.” [Online]. Available:
+http://www.me.berkeley.edu/gri_mech/.
+
+[2] H. Bao, “Development and Validation of a New Eddy Dissipation Concept (EDC) Model for
+MILD Combustion,” 2017.
+
+[3] J. W. Deardorff, “A numerical study of three-dimensional turbulent channel flow at large
+Reynolds numbers,” J. Fluid Mech., vol. 41, no. 2, pp. 453–480, Apr. 1970.
+
+[4] B. A. Sen, “Artificial neural networks based subgrid chemistry model for turbulent reactive
+flow simulations,” ProQuest Diss. Theses, no. December, p. 243, 2009.
+
+[5] B. F. Magnussen, “THE EDDY DISSIPATION CONCEPT A BRIDGE BETWEEN
+SCIENCE AND TECHNOLOGY Invited paper at ECCOMAS Thematic Conference on
+Computational Combustion , Lisbon , June 21-24 , 2005 THE EDDY DISSIPATION
+CONCEPT A BRIDGE BETWEEN SCIENCE AND,” Eccomas, 2005.
+
+[6] B. MAGNUSSEN, “On the structure of turbulence and a generalized eddy dissipation
+concept for chemical reaction in turbulent flow.” 1981.
+
+[7] F. C. Christo, A. R. Masri, E. M. Nebot, and S. B. Pope, “An integrated PDF/neural network
+approach for simulating turbulent reacting systems,” Symp. Combust., vol. 26, no. 1, pp. 43–
+48, 1996.
+
+[8] B. A. Khesin and S. Tabachnikov, Arnold : swimming against the tide. American
+Mathematical Society, 2014.
+
+[9] G. Cybenko, “Approximation by superpositions of sigmoidal functions,” Math. Control.
+Signals, Syst., pp. 303–314, 1989.
+
+[10] K. O. Lye, S. Mishra, and D. Ray, “Deep learning observables in computational fluid
+dynamics,” J. Comput. Phys., vol. 410, p. 109339, 2020.
+
+[11] R. T. Q. Chen, Y. Rubanova, J. Bettencourt, and D. Duvenaud, “Neural Ordinary Differential
+Equations,” UNITEXT - La Mat. per 3 piu 2, vol. 109, no. NeurIPS, pp. 31–60, 2018.
+
+[12] I. Porumbel, A. C. Petcu, F. G. Florean, and C. E. Hritcu, “Artificial neural networks for
+modeling of chemical source terms in CFD simulations of turbulent reactive flows,” Appl.
+Mech. Mater., vol. 555, no. June, pp. 395–400, 2014.
+
+[13] R. Laubscher, “Utilization of artificial neural networks to resolve chemical kinetics in
+turbulent fine structures of an advanced CFD combustion model,” Faculty of Engineering at
+Stellenbosch University, 2017.
+
+[14] J. A. Blasco, N. Fueyo, C. Dopazo, and J. Ballester, “Modelling the temporal evolution of a
+combustion chemical system with an artificial neural network,” Combust. Flame, vol. 113,no.1-2,
+pp. 38–52, 1998.
+
+
 

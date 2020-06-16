@@ -1,5 +1,37 @@
 [
   {
+    "path": "posts/2020-06-15-why-neural-networks-and-combustion-an-introduction/",
+    "title": "Why Neural Networks and Combustion: An Introduction",
+    "description": "This post seeks to discuss the potential of Artificial Neural Networks in treating the source terms needed in combustion simulations.   .",
+    "author": [
+      {
+        "name": "Marlon Cabrera-Ormaza",
+        "url": {}
+      }
+    ],
+    "date": "2020-06-15",
+    "categories": [],
+    "preview": {},
+    "last_modified": "2020-06-15T20:07:39+02:00",
+    "input_file": "why-neural-networks-and-combustion-an-introduction.utf8.md"
+  },
+  {
+    "path": "posts/2020-06-16-data-set-generator-part-1/",
+    "title": "Data Set Generator: Part 1",
+    "description": "This posts deals with creating the initial mass fractions to be used as initial\nconditions for the source terms ODE's.",
+    "author": [
+      {
+        "name": "Marlon Cabrera-Ormaza",
+        "url": "https://example.com/norajones"
+      }
+    ],
+    "date": "2020-06-16",
+    "categories": [],
+    "preview": {},
+    "last_modified": "2020-06-16T05:20:14+02:00",
+    "input_file": "data-set-generator-part-1.utf8.md"
+  },
+  {
     "path": "posts/welcome/",
     "title": "Welcome to ANN for Combustion Simulations",
     "description": "Welcome to our new blog, ANN for Combustion Simulations. We hope you enjoy \nreading what we have to say!",
@@ -14,21 +46,5 @@
     "preview": {},
     "last_modified": "2020-06-14T23:36:52+02:00",
     "input_file": "welcome.utf8.md"
-  },
-  {
-    "path": "posts/2020-06-15-why-neural-networks-and-combustion-an-introduction/",
-    "title": "Why Neural Networks and Combustion: An Introduction",
-    "description": "A short description of the post.",
-    "author": [
-      {
-        "name": "Marlon Cabrera-Ormaza",
-        "url": {}
-      }
-    ],
-    "date": "2020-06-15",
-    "categories": [],
-    "preview": {},
-    "last_modified": "2020-06-15T19:42:33+02:00",
-    "input_file": "why-neural-networks-and-combustion-an-introduction.utf8.md"
   }
 ]
