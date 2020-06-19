@@ -1,21 +1,5 @@
 [
   {
-    "path": "posts/2020-06-15-why-neural-networks-and-combustion-an-introduction/",
-    "title": "Why Neural Networks and Combustion: An Introduction",
-    "description": "This post seeks to discuss the potential of Artificial Neural Networks in treating the source terms needed in combustion simulations.   .",
-    "author": [
-      {
-        "name": "Marlon Cabrera-Ormaza",
-        "url": {}
-      }
-    ],
-    "date": "2020-06-15",
-    "categories": [],
-    "preview": {},
-    "last_modified": "2020-06-15T20:07:39+02:00",
-    "input_file": "why-neural-networks-and-combustion-an-introduction.utf8.md"
-  },
-  {
     "path": "posts/2020-06-16-data-set-generator-part-1/",
     "title": "Data Set Generator: Part 1",
     "description": "This posts deals with creating the initial mass fractions to be used as initial\nconditions for the source terms ODE's.",
@@ -30,6 +14,22 @@
     "preview": {},
     "last_modified": "2020-06-16T05:26:04+02:00",
     "input_file": "data-set-generator-part-1.utf8.md"
+  },
+  {
+    "path": "posts/2020-06-15-why-neural-networks-and-combustion-an-introduction/",
+    "title": "Why Neural Networks and Combustion: An Introduction",
+    "description": "This post seeks to discuss the potential of Artificial Neural Networks in treating the source terms needed in combustion simulations.   .",
+    "author": [
+      {
+        "name": "Marlon Cabrera-Ormaza",
+        "url": {}
+      }
+    ],
+    "date": "2020-06-15",
+    "categories": [],
+    "preview": {},
+    "last_modified": "2020-06-19T16:22:06+02:00",
+    "input_file": "why-neural-networks-and-combustion-an-introduction.utf8.md"
   },
   {
     "path": "posts/welcome/",
