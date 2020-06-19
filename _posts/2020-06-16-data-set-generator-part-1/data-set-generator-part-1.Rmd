@@ -5,11 +5,12 @@ description: |
   conditions for the source terms ODE's. 
 author:
   - name: Marlon Cabrera-Ormaza
-    url: https://example.com/norajones
+    url: 
 date: 06-16-2020
 output:
   distill::distill_article:
     self_contained: false
+bibliography: ../References/Neural_Networks.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -24,7 +25,27 @@ In lay terms, this means that it would not make sense to train a network to pred
 
 It is important that these randomly generated initial conditions agree with was is physically possible. Mathematically speaking, it is possible to generate an infinite number of initial mass fractions containing all the species involved in a given reaction mechanism, however, the existence of some of these might not be actually plausible since they could not agree with one or more conservation law. In particular we'd like our samples to comply with mass conservation.
 
-One way this is feasible is by using Bilger's Definition for a mixture. 
+One way this is feasible is by using Bilger's Mixture Fraction Formula[@Bilger1976]. It is based on the idea that under the assumptions of equal diffusivities for all species, elemental mass fractions are conserved even as the species containing them are being produced or consumed [@KVersteeg2006]:
+
+$$Z_{j}=\sum_{1o=1}^{N} \mu_{i,j} Y_{i}$$
+where:
+
+$Z_{j}$ is the conserve mass fraction of element $j$
+$\mu_{i,j}$ is the mass fraction of element $j$ in species $i$
+$Y_{i}$ is the mass fraction of species $i$
+$N$ is the number of species present in the reaction
+
+Then, according to Bilger, for the mixing and combustion of two streams A and B (e.g. fuel and oxidizer), related by a mixture fraction $\xi$ it holds:
+
+$$Z_{j}=Z_{j,A}\xi+(1-\xi)Z_{j,B}$$
+where:
+$Z_{j,A}$ and $Z_{j,B}$ are elemental mass fractions of element $j$ present in the streams $A$ and $B$.
+
+$\xi$ is the stream mixture fraction
+
+The generated mass fractions must also comply with the condition that their sum must be equal to the unit:
+
+$$\sum_{i=1}^{N}Y_{i}=1$$
 
 ## __Setting the work environment__
 The libraries that will be used for this are:
@@ -35,11 +56,11 @@ The libraries that will be used for this are:
 ```{r}
 library(reticulate)
 library(knitr)
-use_condaenv('torch')
+use_condaenv('tensor')
 ```
 
 
-```{python}
+```{python echo=FALSE}
 import numpy as np
 import cantera as ct
 
@@ -49,16 +70,16 @@ np.set_printoptions(formatter={'float': lambda x: "{0:0.4f}".format(x)})
 
 ## __Analysis of the combustion gas__
 
-Before proceeding to generating the set of initial random condition we need to be able to obtain the chemical properties of our gas mixture. The library _Cantera_ is useful in this endeavor since it allows for the reading of information from a reaction mechanism and then provides functionality for interacting with them in Python.
+Before proceeding to generating the set of initial random condition we need to be able to obtain the chemical properties of our gas mixture. The library _Cantera_ is useful in this endeavor since it allows for the reading of information from a reaction mechanism and then provides functionality for interacting with them via Python.
 
-```{python}
+```{python echo=FALSE}
 # We read a solution mechanism and assign its properties to an object
 gas = ct.Solution('./Mechanisms/WD_Laubscher.cti')
 ```
 
 After assigning the properties of a reaction mechanism to an object, _Cantera_ provides functions to use them.
 
-```{python}
+```{python echo=TRUE}
 #Examples of some of the Cantera functions to be used:
 
 
@@ -79,7 +100,7 @@ print(' Elements in the mechanism:',elements,'\n',
 
 Since noble gases do not interact in any reaction (footnote), the following function is designed to remove them:
 
-```{python}
+```{python echo=TRUE}
 #Noble gases filter:
 def noble_filter(elements):
     filter_elements=[]
@@ -92,18 +113,75 @@ def noble_filter(elements):
     return filter_elements
 ```
 
-```{python}
+```{python echo=TRUE}
 elements=noble_filter(gas.element_names)
 print('Elements without noble gases: ',elements)
 ```
 
-Using the functions described above is possible to build one that generates the matrix needes for the linear system of equations to be solved in order for the initial conditions to agree with Bilger's Definition.
 
 ## __Bilger's Definition__
 
-Using the functions described above is possible to build one that generates the matrix needes for the linear system of equations to be solved in order for the initial conditions to agree with Bilger's Definition.
+As was detailed above, Bilger's Mixture Fraction Formula provides a nice framework under which initial mas fractions can be created. Provided a random mixture fraction, and elemental mass fraction for two streams, Bilger's Equations could then be solved returning a vector of initial conditions as a result. To illustrate this properly, it is possible to take the previous mechanism (with seven species and four elements)as an example and develop the related system of equations for it. 
 
-```{python}
+The extant species in the mechanism are: $Y_{CH_{4}},Y_{N_{2}},Y_{CO},Y_{CO_{2}},Y_{H_{2}O},Y_{O_{2}},Y_{H_{2}}$; with the elements: $C,H,O,N$ 
+
+Thus we get the following equations: 
+
+$$Y_{CH_{4}}+Y_{N_{2}}+Y_{CO}+Y_{CO_{2}}+Y_{H_{2}O}+Y_{O_{2}}+Y_{H_{2}}=1$$
+$$Z_{H}=\mu_{H,H_{2}}Y_{H_{2}}+\mu_{H,H_{2}O}Y_{H_{2}O}+\mu_{H,CH_{4}}Y_{CH_{4}}$$
+$$Z_{C}=\mu_{C,CO_{2}}Y_{CO_{2}}+\mu_{C,CO}Y_{CO}+\mu_{C,CH_{4}}Y_{CH_{4}}$$
+$$Z_{O}=\mu_{H,H_{2}}Y_{H_{2}}+\mu_{H,H_{2}O}Y_{H_{2}O}+\mu_{H,CH_{4}}Y_{CH_{4}}$$
+$$Z_{N}=\mu_{N,N_{2}}Y_{N_{2}}$$
+
+Generalizing for a mechanism with $m$ number of elements and $n$ number of species, this can be rewritten  as a linear system using matrix and vector notation:
+
+$$Ax=b$$
+
+\def\A{
+\begin{bmatrix}
+    1 \cdots 1 \\
+    \mu_{1,1} \cdots \mu_{1,n} \\
+    \mu_{2,1} \cdots \mu_{2,n} \\
+    \vdots \\
+    \mu_{m,1} \cdots \mu_{m,n} 
+\end{bmatrix}}
+
+\def\X{
+\begin{bmatrix}
+    Y_1 \\
+    Y_2\\
+    Y_3\\
+    \vdots \\
+    Y_n
+\end{bmatrix}}
+
+\def\b{
+\begin{bmatrix}
+    1 \\
+    z_1 \\
+    z_2 \\
+    \vdots \\
+    z_m
+\end{bmatrix}}
+
+
+\begin{equation}
+\A_{m+1,n} * \X_{n,1}=\b_{m+1,1   }
+\end{equation}
+
+Using the functions described in the previous section possible to build a new one that generates the matrix needed to solve a linear system of equations for the initial conditions that agrees with Bilger's Definition.
+
+To this end, the coefficients $\mu_{i,j}$ can be computed in the following way:
+
+$$\mu_{i,j}=\frac{a_{i,j}W_{j}}{MW_{i}}$$
+where:
+
+$a_{i,j}$ is the number of atoms of element $j$ in species $i$ 
+$W_{j}$ is the atomic weight of element $j$
+$MW_{i}$ is the molecular mass of species $i$
+
+
+```{python echo=TRUE}
 #Matrix for the linear system of Equations:
 def bilger_matrix(gas):
     
@@ -112,7 +190,7 @@ def bilger_matrix(gas):
     #Species present in the mechanism
     species=gas.species_names
     
-    #Matrix to store coeffiecients
+    #Matrix to store coefficients
     A=np.ones((len(elements)+1,len(species)))
    
     row=1;
@@ -128,9 +206,9 @@ A=bilger_matrix(gas)
 print(A)
 ```
 
-As for the resulting vector, it will be created using random mixture fractions of a fuel and an oxydizer. Python dictionaries bestow a simple way to storing this information. For the results to be reproducible, it is necessary to use a seeded random number generator. Nonetheles the implementation of it won't come until later.
+As for the resulting vector, it will be created using random mixture fractions of a fuel and an oxidizer. Python dictionaries bestow a simple way to storing this information. For the results to be reproducible, it is necessary to use a seeded random number generator. Nonetheless the implementation of it won't come until later.
 
-```{python}
+```{python echo=TRUE}
 #Dictionaries for oxydizer and fuel mass fractions:
 fuel={'H':0.03922422,'O':0.19663877,'C':0.11684286,'N':0.64729}
 oxy={'H':1.03625e-5,'O':0.23298543,'C':3.194117e-5,'N':0.766970811}
@@ -145,7 +223,7 @@ def bilger_vector(f_mix, fuel_dict, oxy_dict, elements):
     return np.copy(b)
 ```
 
-```{python}
+```{python echo=TRUE}
 np.random.seed(0)
 rn=np.random.randn(1)
 b=bilger_vector(rn,fuel, oxy, elements)
@@ -154,18 +232,23 @@ print(b)
 
 Now is possible to see both the coefficient matrix and result vector needed to solve the linear system Ax=b. 
 
-```{python}
+```{python echo=TRUE}
 print("A =\n\n",A)
-print("\nb.transpose =\n\n",b)
+print("\nB.transpose =\n\n",b)
 ```
 
 ## __Solving the linear system__
 
-Once the system of equations is setted up it is neccesary to solve it for the species mass fractions. Unfortunately, as can be seen, this is an undetermined system (i.e. it has more unknowns thant equations) and thus, in the case it can be solved, this solution will not be unique. To deal with this issue there are two possibilities using either a least-squares solver or a non-negative least squares solver. Both will provide an approximation of the solution by minimizing the squared euclidean norm:
+Once the system of equations is set up it is necessary to solve it for the species mass fractions. Unfortunately, for most mechanisms, this will be an undetermined system (i.e. it has more unknowns than equations) and thus, in the case it can be solved, this solution will not be unique. To deal with this issue there are two possibilities using either a [least-squares](https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html) or or a [non-negative least squares](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.nnls.html) solver. Both will provide an approximation of the solution by minimizing the squared euclidean norm:
 
-However, they differ in certain aspects, and thus is necessary to analyze the distribution of the samples generated with each in order to select an appropiate method. 
+$$\underset{x} {\arg\min}||Ax-b||^2=0$$
+whilst  non-negative least squares also implements the restriction:
 
-```{python}
+$$x_i\geq0\quad \forall x_{i} \in x $$
+
+However, they differ in certain aspects, and thus is necessary to analyze the distribution of the samples generated with each in order to select an appropriate method. 
+
+```{python echo=TRUE}
 #Solution of the linear system via least squares solver
 import pandas as pd
 S=[]
@@ -185,7 +268,7 @@ df1['Mixture']=F
 df1.head()
 ```
 
-```{python}
+```{python echo=TRUE}
 #Solution of the linear system via non-negative least squares solver
 import pandas as pd
 from scipy.optimize import nnls 
@@ -206,39 +289,17 @@ df2['Mixture']=F
 df2.head()
 ```
 
-### __Distribution of the data samples__
+### __NNLS vs Least Squares__
+
+In this section, the resulting initial mass fractions will be compared. Using the same mixture fractions, samples are generated with each of the methods and then plotted using a scatter graph. This will allow for a description of their behavior under diferent situations. Things that must be checked are whether any of the methods are producing negative or zero mass fractions for certain species, and if that'd be the case, what is the difference using the other solver for the same random mixture fraction.
 
 #### __CH4__
 
-```{python}
+```{python echo=TRUE}
 import json
-from IPython.display import clear_output
 import plotly
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
-specie=[df1['CH4'],df2['CH4']]
-group_labels = ['Least Squares', 'Non-negative lsq']
-fig = ff.create_distplot(specie, group_labels,bin_size=.03)
-fig.update_layout(
-    title="Distribution of CH4 Mass Fractions"
-);
-```
-
-```{python include = FALSE}
-fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-```
-
-
-```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
-plotly::as_widget(
-  jsonlite::fromJSON(
-    reticulate::py$fig, simplifyVector=FALSE))
-```
-
-```{python}
 import plotly.express as px
+specie=[df1['CH4'],df2['CH4']]
 fig = px.scatter(x=specie[0], y=specie[1])
 fig.update_layout(
     title="Relation of CH4 Mass Fractions obtained by different solvers",
@@ -259,33 +320,14 @@ plotly::as_widget(
     reticulate::py$fig, simplifyVector=FALSE))
 ```
 
+
+Here it can be seen that for certain mixture fractions the least squares method is producing negative methane mass fractions which is something that is not desired. Its non negative version produces values in the range between  an 0.05 for the same mixtrue fractions.
 #### __O2__
 
-```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
+
+
+```{python echo=TRUE}
 specie=[df1['O2'],df2['O2']]
-group_labels = ['Least Squares', 'Non-negative lsq']
-fig = ff.create_distplot(specie, group_labels,bin_size=.03)
-fig.update_layout(
-    title="Distribution of O2 Mass Fractions"
-);
-```
-```{python include = FALSE}
-fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-```
-
-
-```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
-plotly::as_widget(
-  jsonlite::fromJSON(
-    reticulate::py$fig, simplifyVector=FALSE))
-```
-
-```{python}
-import plotly.express as px
 fig = px.scatter(x=specie[0], y=specie[1])
 fig.update_layout(
     title="Relation of O2 Mass Fractions obtained by different solvers",
@@ -300,40 +342,18 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
 ```
+
+None of the solver result in any sort of issue when solving for the $O_{2}$ mass fractions, as both produce only positive values.
 
 ### __H2O__
 
-```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
+
+```{python echo=TRUE}
 specie=[df1['H2O']]
-group_labels = ['Least Squares']
-fig = ff.create_distplot(specie, group_labels,bin_size=.03)
-fig.update_layout(
-    title="Distribution of O2 Mass Fractions"
-);
-```
-```{python include = FALSE}
-fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-```
-
-
-```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
-plotly::as_widget(
-  jsonlite::fromJSON(
-    reticulate::py$fig, simplifyVector=FALSE))
-```
-
-```{python}
-import plotly.express as px
 fig = px.scatter(x=specie[0], y=df2['H2O'])
 fig.update_layout(
     title="Relation of H2O Mass Fractions obtained by different solvers",
@@ -347,40 +367,17 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
 ```
+
+The least squares method produces only positive values, which is the desired behavior. The non-negative solver always results in zero values.
 
 ### __N2__
 
-```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
+```{python echo=TRUE}
 specie=[df1['N2'],df2['N2']]
-group_labels = ['Least Squares', 'Non-negative lsq']
-fig = ff.create_distplot(specie, group_labels,bin_size=.03)
-fig.update_layout(
-    title="Distribution of N2 Mass Fractions"
-);
-```
-```{python include = FALSE}
-fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-```
-
-
-```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
-plotly::as_widget(
-  jsonlite::fromJSON(
-    reticulate::py$fig, simplifyVector=FALSE))
-```
-
-```{python}
-import plotly.express as px
 fig = px.scatter(x=specie[0], y=specie[1])
 fig.update_layout(
     title="Relation of N2 Mass Fractions obtained by different solvers",
@@ -395,40 +392,18 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
 ```
+
+Since the mass fraction of $N_2$ does not depend on the other species (and thus only depends in the positive random mixture fraction) it was expected that only non-negative values will be obtained. Nevertheless, the plot above is useful to describe the range in which said variable lies.
 
 ### __CO__
 
-```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
+
+```{python echo=TRUE}
 specie=[df1['CO'],df2['CO']]
-group_labels = ['Least Squares', 'Non-negative lsq']
-fig = ff.create_distplot(specie, group_labels,bin_size=.03)
-fig.update_layout(
-    title="Distribution of CO Mass Fractions"
-);
-```
-```{python include = FALSE}
-fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-```
-
-
-```{r layout="l-body-outset", echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
-plotly::as_widget(
-  jsonlite::fromJSON(
-    reticulate::py$fig, simplifyVector=FALSE))
-```
-
-```{python}
-import plotly.express as px
 fig = px.scatter(x=specie[0], y=specie[1])
 fig.update_layout(
     title="Relation of CO Mass Fractions obtained by different solvers",
@@ -443,41 +418,18 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
 ```
+
+Both methods give only positive results, however the range of NNLS results is more limited, and as can be seen are orders of magnitude smaller.
 
 ### __CO2__
 
+
 ```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
 specie=[df1['CO2']]
-group_labels = ['Least Squares']
-fig = ff.create_distplot(specie, group_labels,bin_size=.005)
-fig.update_layout(
-    title="Distribution of CO2 Mass Fractions"
-);
-```
-
-```{python include = FALSE}
-fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-```
-
-
-```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
-plotly::as_widget(
-  jsonlite::fromJSON(
-    reticulate::py$fig, simplifyVector=FALSE))
-```
-
-```{python}
-import plotly.express as px
 fig = px.scatter(x=specie[0], y=df2['CO2'])
 fig.update_layout(
     title="Relation of CO2 Mass Fractions obtained by different solvers",
@@ -490,43 +442,21 @@ fig.update_layout(
 fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 ```
 
-
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
+
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
 ```
+
+Again similar behavior as in the case for $H_{2}O$. NNLS result only on zero values.
 
 ### __H2__
 
-```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
-specie=[df1['H2'],df2['H2']]
-group_labels = ['Least Squares', 'Non-negative lsq']
-fig = ff.create_distplot(specie, group_labels,bin_size=.01)
-fig.update_layout(
-    title="Distribution of H2 Mass Fractions"
-);
-```
-
-```{python include = FALSE}
-fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-```
-
-
-```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
-plotly::as_widget(
-  jsonlite::fromJSON(
-    reticulate::py$fig, simplifyVector=FALSE))
-```
 
 ```{python}
 import plotly.express as px
+specie=[df1['H2'],df2['H2']]
 fig = px.scatter(x=specie[0], y=specie[1])
 fig.update_layout(
     title="Relation of H2 Mass Fractions obtained by different solvers",
@@ -541,12 +471,12 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
 ```
+
+The solutions for $H_2$ act in an alike manner to those for $CO$, where both solvers produce only positive result, but NNLS range is more limited and orders of magnitude smaller.
 
 ## __Final Solution of the linear system:__
 
@@ -596,7 +526,7 @@ Fractions=pd.DataFrame(YInit,columns=gas.species_names)
 Fractions.head()
 ```
 
-### __Distribution of the Mass Fractions__
+### __Distribution of the Mass Fractions Samples__
 
 To finish, it is important once again to check the distribution of the mass fractions for each indivifual species.
 
@@ -619,8 +549,6 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
@@ -629,8 +557,6 @@ plotly::as_widget(
 #### __O2__:
 
 ```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
 specie=[Fractions['O2']]
 group_labels = ['Generator Function']
 fig = ff.create_distplot(specie, group_labels,bin_size=.03)
@@ -639,11 +565,20 @@ fig.update_layout(
 );
 ```
 
+```{python include = FALSE}
+fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+```
+
+
+```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
+plotly::as_widget(
+  jsonlite::fromJSON(
+    reticulate::py$fig, simplifyVector=FALSE))
+```
+
 #### __H2O__:
 
 ```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
 specie=[Fractions['H2O']]
 group_labels = ['Generator Function']
 fig = ff.create_distplot(specie, group_labels,bin_size=.03)
@@ -658,8 +593,6 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
@@ -668,8 +601,6 @@ plotly::as_widget(
 #### __N2__:
 
 ```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
 specie=[Fractions['N2']]
 group_labels = ['Generator Function']
 fig = ff.create_distplot(specie, group_labels,bin_size=.03)
@@ -684,8 +615,6 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
@@ -694,8 +623,6 @@ plotly::as_widget(
 #### __CO__:
 
 ```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
 specie=[Fractions['CO']]
 group_labels = ['Generator Function']
 fig = ff.create_distplot(specie, group_labels,bin_size=.03)
@@ -710,8 +637,6 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
@@ -720,8 +645,6 @@ plotly::as_widget(
 #### __CO2__:
 
 ```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
 specie=[Fractions['CO2']]
 group_labels = ['Generator Function']
 fig = ff.create_distplot(specie, group_labels,bin_size=.03)
@@ -736,8 +659,6 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
@@ -746,8 +667,6 @@ plotly::as_widget(
 #### __H2__:
 
 ```{python}
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
 specie=[Fractions['H2']]
 group_labels = ['Generator Function']
 fig = ff.create_distplot(specie, group_labels,bin_size=.03)
@@ -762,8 +681,6 @@ fig = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
 ```{r layout="l-body-outset",echo = FALSE , message=FALSE, warning=FALSE}
-library(plotly)
-library(jsonlite)
 plotly::as_widget(
   jsonlite::fromJSON(
     reticulate::py$fig, simplifyVector=FALSE))
