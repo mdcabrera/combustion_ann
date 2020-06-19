@@ -9,6 +9,7 @@ output:
   distill::distill_article:
     self_contained: false
 bibliography: ../References/Neural_Networks.bib
+preview: thumbnail.png
 ---
 
 ```{r setup, include=FALSE}
